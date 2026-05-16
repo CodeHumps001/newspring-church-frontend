@@ -82,16 +82,23 @@ export default function NewRecordPage() {
     }));
   };
 
-  const handleCategoryChange = (value: string) => {
-    setFormData({ ...formData, category: value });
+  // Fixed handlers that accept string | null
+  const handleCategoryChange = (value: string | null) => {
+    if (value) {
+      setFormData({ ...formData, category: value });
+    }
   };
 
-  const handleWeekChange = (value: string) => {
-    setFormData({ ...formData, weekNumber: parseInt(value) });
+  const handleWeekChange = (value: string | null) => {
+    if (value) {
+      setFormData({ ...formData, weekNumber: parseInt(value) });
+    }
   };
 
-  const handleMonthChange = (value: string) => {
-    setFormData({ ...formData, month: parseInt(value) });
+  const handleMonthChange = (value: string | null) => {
+    if (value) {
+      setFormData({ ...formData, month: parseInt(value) });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
