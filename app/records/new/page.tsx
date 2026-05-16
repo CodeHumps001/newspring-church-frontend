@@ -3,9 +3,31 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import MainLayout from "@/components/Layout/MainLayout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { recordsAPI, utilsAPI } from "@/services/api";
 import { CATEGORIES } from "@/types";
+import { Calculator } from "lucide-react";
 import toast from "react-hot-toast";
+
+// Simple textarea component since shadcn textarea might not be installed
+const Textarea = ({
+  ...props
+}: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
+  <textarea
+    className="flex min-h-[80px] w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+    {...props}
+  />
+);
 
 export default function NewRecordPage() {
   const router = useRouter();
@@ -35,7 +57,6 @@ export default function NewRecordPage() {
       const response = await utilsAPI.getDenominations();
       const denoms = response.data.denominations;
       setDenominations(denoms);
-      // Initialize quantities to 0
       const initialQuantities: { [key: number]: number } = {};
       denoms.forEach((d: number) => {
         initialQuantities[d] = 0;
@@ -65,7 +86,6 @@ export default function NewRecordPage() {
     e.preventDefault();
     setLoading(true);
 
-    // Build denominations array (only non-zero quantities)
     const denominationsArray = Object.entries(quantities)
       .filter(([_, qty]) => qty > 0)
       .map(([denom, qty]) => ({
@@ -79,13 +99,11 @@ export default function NewRecordPage() {
       return;
     }
 
-    const recordData = {
-      ...formData,
-      denominations: denominationsArray,
-    };
-
     try {
-      await recordsAPI.create(recordData);
+      await recordsAPI.create({
+        ...formData,
+        denominations: denominationsArray,
+      });
       toast.success("Record created successfully!");
       router.push("/dashboard");
     } catch (error: any) {
@@ -97,9 +115,9 @@ export default function NewRecordPage() {
 
   return (
     <MainLayout>
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">
+      <div className="max-w-6xl mx-auto space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">
             New Financial Entry
           </h1>
           <p className="text-gray-600 mt-1">
@@ -108,210 +126,205 @@ export default function NewRecordPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Basic Info */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              Service Information
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Category
-                </label>
-                <select
+          <Card>
+            <CardHeader>
+              <CardTitle>Service Information</CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label>Category</Label>
+                <Select
                   value={formData.category}
-                  onChange={(e) =>
-                    setFormData({ ...formData, category: e.target.value })
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, category: value })
                   }
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                  required
                 >
-                  {CATEGORIES.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CATEGORIES.map((cat) => (
+                      <SelectItem key={cat} value={cat}>
+                        {cat}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Week Number
-                </label>
-                <select
-                  value={formData.weekNumber}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      weekNumber: parseInt(e.target.value),
-                    })
+              <div className="space-y-2">
+                <Label>Week Number</Label>
+                <Select
+                  value={formData.weekNumber.toString()}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, weekNumber: parseInt(value) })
                   }
-                  className="w-full px-3 py-2 border rounded-lg"
-                  required
                 >
-                  {[1, 2, 3, 4, 5].map((week) => (
-                    <option key={week} value={week}>
-                      Week {week}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[1, 2, 3, 4, 5].map((week) => (
+                      <SelectItem key={week} value={week.toString()}>
+                        Week {week}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Month
-                </label>
-                <select
-                  value={formData.month}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      month: parseInt(e.target.value),
-                    })
+              <div className="space-y-2">
+                <Label>Month</Label>
+                <Select
+                  value={formData.month.toString()}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, month: parseInt(value) })
                   }
-                  className="w-full px-3 py-2 border rounded-lg"
-                  required
                 >
-                  {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
-                    <option key={month} value={month}>
-                      {new Date(2000, month - 1).toLocaleString("default", {
-                        month: "long",
-                      })}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 12 }, (_, i) => i + 1).map(
+                      (month) => (
+                        <SelectItem key={month} value={month.toString()}>
+                          {new Date(2000, month - 1).toLocaleString("default", {
+                            month: "long",
+                          })}
+                        </SelectItem>
+                      ),
+                    )}
+                  </SelectContent>
+                </Select>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Year
-                </label>
-                <input
+              <div className="space-y-2">
+                <Label>Year</Label>
+                <Input
                   type="number"
                   value={formData.year}
                   onChange={(e) =>
                     setFormData({ ...formData, year: parseInt(e.target.value) })
                   }
-                  className="w-full px-3 py-2 border rounded-lg"
-                  required
+                  min={2000}
+                  max={2100}
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Service Date
-                </label>
-                <input
+              <div className="space-y-2">
+                <Label>Service Date</Label>
+                <Input
                   type="date"
                   value={formData.serviceDate}
                   onChange={(e) =>
                     setFormData({ ...formData, serviceDate: e.target.value })
                   }
-                  className="w-full px-3 py-2 border rounded-lg"
-                  required
                 />
               </div>
 
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Notes (Optional)
-                </label>
-                <textarea
+              <div className="md:col-span-2 space-y-2">
+                <Label>Notes (Optional)</Label>
+                <Textarea
                   value={formData.notes}
                   onChange={(e) =>
                     setFormData({ ...formData, notes: e.target.value })
                   }
-                  rows={2}
-                  className="w-full px-3 py-2 border rounded-lg"
-                  placeholder="Any special notes..."
+                  placeholder="Any special notes about this service..."
+                  rows={3}
                 />
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
-          {/* Denominations Table */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              Denominations
-            </h2>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">
-                      Denomination
-                    </th>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">
-                      Quantity
-                    </th>
-                    <th className="px-4 py-2 text-right text-sm font-medium text-gray-700">
-                      Subtotal (₵)
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {denominations.map((denom) => {
-                    const qty = quantities[denom] || 0;
-                    const subtotal = denom * qty;
-                    return (
-                      <tr key={denom}>
-                        <td className="px-4 py-2 text-sm text-gray-900">
-                          ₵{denom.toFixed(2)}
-                        </td>
-                        <td className="px-4 py-2">
-                          <input
-                            type="number"
-                            min="0"
-                            value={qty}
-                            onChange={(e) =>
-                              handleQuantityChange(
-                                denom,
-                                parseInt(e.target.value) || 0,
-                              )
-                            }
-                            className="w-24 px-2 py-1 border rounded"
-                          />
-                        </td>
-                        <td className="px-4 py-2 text-right text-sm text-gray-900">
-                          {subtotal > 0 ? `₵${subtotal.toFixed(2)}` : "-"}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-                <tfoot className="bg-gray-50">
-                  <tr>
-                    <td
-                      colSpan={2}
-                      className="px-4 py-3 text-right font-semibold"
-                    >
-                      Total:
-                    </td>
-                    <td className="px-4 py-3 text-right text-lg font-bold text-blue-600">
-                      ₵{total.toFixed(2)}
-                    </td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span>Denominations</span>
+                <div className="flex items-center gap-2 text-sm font-normal">
+                  <Calculator className="w-4 h-4" />
+                  <span>Total: ₵{total.toFixed(2)}</span>
+                </div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                        Denomination
+                      </th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                        Quantity
+                      </th>
+                      <th className="px-4 py-3 text-right text-sm font-medium text-gray-700">
+                        Subtotal
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {denominations.map((denom) => {
+                      const qty = quantities[denom] || 0;
+                      const subtotal = denom * qty;
+                      return (
+                        <tr key={denom}>
+                          <td className="px-4 py-2 text-sm font-medium text-gray-900">
+                            ₵{denom.toFixed(2)}
+                          </td>
+                          <td className="px-4 py-2">
+                            <Input
+                              type="number"
+                              min="0"
+                              value={qty}
+                              onChange={(e) =>
+                                handleQuantityChange(
+                                  denom,
+                                  parseInt(e.target.value) || 0,
+                                )
+                              }
+                              className="w-32"
+                            />
+                          </td>
+                          <td className="px-4 py-2 text-right text-sm text-gray-900">
+                            {subtotal > 0 ? `₵${subtotal.toFixed(2)}` : "-"}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                  <tfoot className="bg-gray-50 border-t">
+                    <tr>
+                      <td
+                        colSpan={2}
+                        className="px-4 py-3 text-right font-semibold text-gray-900"
+                      >
+                        Total:
+                      </td>
+                      <td className="px-4 py-3 text-right text-lg font-bold text-blue-600">
+                        ₵{total.toFixed(2)}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
 
-          {/* Buttons */}
-          <div className="flex justify-end space-x-3">
-            <button
+          <div className="flex justify-end gap-4">
+            <Button
               type="button"
+              variant="outline"
               onClick={() => router.back()}
-              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
               disabled={loading}
-              className="px-6 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              className="bg-blue-600 hover:bg-blue-700"
             >
               {loading ? "Saving..." : "Save Record"}
-            </button>
+            </Button>
           </div>
         </form>
       </div>
