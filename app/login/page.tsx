@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   Card,
@@ -13,7 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Church, Mail, Lock } from "lucide-react";
+import { Mail, Lock, LogIn } from "lucide-react";
 import toast from "react-hot-toast";
 
 export default function LoginPage() {
@@ -39,30 +40,55 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
-      <Card className="max-w-md w-full shadow-2xl">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-yellow-400 via-yellow-500 to-blue-600 py-12 px-4 sm:px-6 lg:px-8">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 bg-black/10" />
+
+      <Card className="max-w-md w-full shadow-2xl border-0 relative z-10 backdrop-blur-sm bg-white/95">
         <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <div className="bg-blue-100 p-3 rounded-full">
-              <Church className="w-12 h-12 text-blue-600" />
+          {/* Logo Section */}
+          <div className="flex justify-center mb-6">
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 to-blue-600 rounded-full blur-lg opacity-50" />
+              <div className="relative bg-white p-3 rounded-full shadow-xl">
+                <Image
+                  src="/logo.jpeg"
+                  alt="Newspring Chapel A/G Logo"
+                  width={80}
+                  height={80}
+                  className="rounded-full object-cover"
+                  priority
+                />
+              </div>
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold text-gray-900">
-            Newspring Chapel A/G
+
+          {/* Church Name */}
+          <CardTitle className="text-3xl font-bold bg-gradient-to-r from-blue-700 to-yellow-600 bg-clip-text text-transparent">
+            Newspring Chapel
           </CardTitle>
-          <CardDescription>Church Financial Management System</CardDescription>
+          <p className="text-sm text-blue-600 font-semibold mt-1">
+            Assemblies of God, Ghana
+          </p>
+          <CardDescription className="text-gray-600 mt-2">
+            Church Financial Management System
+          </CardDescription>
         </CardHeader>
+
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Email Field */}
             <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Label htmlFor="email" className="text-gray-700">
+                Email Address
+              </Label>
+              <div className="relative group">
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-yellow-500 w-4 h-4 transition-colors group-focus-within:text-blue-600" />
                 <Input
                   id="email"
                   type="email"
                   placeholder="admin@newspring.org"
-                  className="pl-10"
+                  className="pl-10 border-gray-300 focus:border-yellow-500 focus:ring-yellow-500 transition-all"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -70,15 +96,18 @@ export default function LoginPage() {
               </div>
             </div>
 
+            {/* Password Field */}
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Label htmlFor="password" className="text-gray-700">
+                Password
+              </Label>
+              <div className="relative group">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-yellow-500 w-4 h-4 transition-colors group-focus-within:text-blue-600" />
                 <Input
                   id="password"
                   type="password"
                   placeholder="••••••••"
-                  className="pl-10"
+                  className="pl-10 border-gray-300 focus:border-yellow-500 focus:ring-yellow-500 transition-all"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -86,18 +115,41 @@ export default function LoginPage() {
               </div>
             </div>
 
+            {/* Login Button */}
             <Button
               type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700"
+              className="w-full bg-gradient-to-r from-blue-600 to-yellow-500 hover:from-blue-700 hover:to-yellow-600 text-white font-semibold py-2 transition-all duration-300 shadow-lg hover:shadow-xl"
               disabled={loading}
             >
-              {loading ? "Signing in..." : "Sign in"}
+              {loading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                  Signing in...
+                </>
+              ) : (
+                <>
+                  <LogIn className="w-4 h-4 mr-2" />
+                  Sign in
+                </>
+              )}
             </Button>
 
-            <div className="text-center text-sm text-gray-500">
-              <p>Demo credentials:</p>
-              <p className="font-mono text-xs mt-1">
-                admin@newspring.org / Admin123!
+            {/* Demo Credentials */}
+            <div className="text-center text-sm bg-gradient-to-r from-blue-50 to-yellow-50 p-3 rounded-lg border border-yellow-200">
+              <p className="text-gray-600 font-medium">Demo Credentials</p>
+              <div className="mt-1 space-y-1">
+                <p className="font-mono text-xs text-gray-500">
+                  📧 admin@newspring.org
+                </p>
+                <p className="font-mono text-xs text-gray-500">🔑 Admin123!</p>
+              </div>
+            </div>
+
+            {/* Footer Note */}
+            <div className="text-center">
+              <p className="text-xs text-gray-400">
+                © {new Date().getFullYear()} Newspring Chapel A/G. All rights
+                reserved.
               </p>
             </div>
           </form>
