@@ -57,12 +57,12 @@ export default function EditRecordPage() {
 
   const loadData = async () => {
     try {
-      // Load denominations
+      // Load denominations first
       const denomResponse = await utilsAPI.getDenominations();
       const denoms = denomResponse.data.denominations;
       setDenominations(denoms);
 
-      // Load record data
+      // Then load record data
       const recordResponse = await recordsAPI.getById(parseInt(id));
       const record = recordResponse.data.data;
 
@@ -75,7 +75,7 @@ export default function EditRecordPage() {
         notes: record.notes || "",
       });
 
-      // Load quantities
+      // Create quantities object with existing values
       const initialQuantities: { [key: number]: number } = {};
       denoms.forEach((d: number) => {
         const entry = record.denominationEntries.find(
