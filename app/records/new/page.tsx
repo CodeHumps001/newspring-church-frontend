@@ -19,7 +19,7 @@ import { CATEGORIES } from "@/types";
 import { Calculator } from "lucide-react";
 import toast from "react-hot-toast";
 
-// Simple textarea component since shadcn textarea might not be installed
+// Simple textarea component
 const Textarea = ({
   ...props
 }: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
@@ -82,6 +82,18 @@ export default function NewRecordPage() {
     }));
   };
 
+  const handleCategoryChange = (value: string) => {
+    setFormData({ ...formData, category: value });
+  };
+
+  const handleWeekChange = (value: string) => {
+    setFormData({ ...formData, weekNumber: parseInt(value) });
+  };
+
+  const handleMonthChange = (value: string) => {
+    setFormData({ ...formData, month: parseInt(value) });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -135,9 +147,7 @@ export default function NewRecordPage() {
                 <Label>Category</Label>
                 <Select
                   value={formData.category}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, category: value })
-                  }
+                  onValueChange={handleCategoryChange}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -156,9 +166,7 @@ export default function NewRecordPage() {
                 <Label>Week Number</Label>
                 <Select
                   value={formData.weekNumber.toString()}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, weekNumber: parseInt(value) })
-                  }
+                  onValueChange={handleWeekChange}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -177,9 +185,7 @@ export default function NewRecordPage() {
                 <Label>Month</Label>
                 <Select
                   value={formData.month.toString()}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, month: parseInt(value) })
-                  }
+                  onValueChange={handleMonthChange}
                 >
                   <SelectTrigger>
                     <SelectValue />
