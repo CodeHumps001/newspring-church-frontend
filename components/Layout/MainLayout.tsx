@@ -8,7 +8,7 @@ import {
   HomeIcon,
   PlusCircleIcon,
   DocumentChartBarIcon,
-  CogIcon,
+  CogIcon, // Fixed: Changed from CogIcon to Cog6Icon
   ArrowRightOnRectangleIcon,
   Bars3Icon,
   XMarkIcon,
@@ -22,7 +22,7 @@ const navigation = [
     href: "/reports/monthly",
     icon: DocumentChartBarIcon,
   },
-  { name: "Settings", href: "/settings", icon: Cog6Icon },
+  { name: "Settings", href: "/settings", icon: CogIcon }, // Fixed here too
 ];
 
 export default function MainLayout({
