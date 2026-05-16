@@ -19,7 +19,7 @@ import {
   HomeIcon,
   PlusCircleIcon,
   DocumentChartBarIcon,
-  CogIcon, // ✅ Fixed - CogIcon is correct
+  CogIcon,
   ArrowRightOnRectangleIcon,
   Bars3Icon,
 } from "@heroicons/react/24/outline";
@@ -45,7 +45,7 @@ export default function MainLayout({
   const { user, logout } = useAuth();
 
   const getInitials = (email: string) => {
-    return email.substring(0, 2).toUpperCase();
+    return email?.substring(0, 2).toUpperCase() || "AD";
   };
 
   return (
@@ -54,7 +54,7 @@ export default function MainLayout({
       <div className="lg:hidden border-b bg-white sticky top-0 z-50">
         <div className="flex items-center justify-between px-4 h-16">
           <Sheet open={open} onOpenChange={setOpen}>
-            <SheetTrigger asChild>
+            <SheetTrigger>
               <Button variant="ghost" size="icon">
                 <Bars3Icon className="w-6 h-6" />
               </Button>
@@ -104,7 +104,7 @@ export default function MainLayout({
           </Sheet>
           <h1 className="text-lg font-bold text-blue-700">Newspring Chapel</h1>
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+            <DropdownMenuTrigger>
               <Button variant="ghost" size="icon" className="rounded-full">
                 <Avatar className="h-8 w-8">
                   <AvatarFallback className="bg-blue-100 text-blue-700">
