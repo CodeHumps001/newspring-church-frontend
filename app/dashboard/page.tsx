@@ -22,14 +22,18 @@ import {
   DollarSign,
   Plus,
   Eye,
+  PencilIcon,
+  Trash2,
 } from "lucide-react";
 import MainLayout from "@/components/Layout/MainLayout";
-import { reportsAPI } from "@/services/api";
+import { reportsAPI, recordsAPI } from "@/services/api";
 import { DashboardData } from "@/types";
 import toast from "react-hot-toast";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -45,6 +49,24 @@ export default function DashboardPage() {
       toast.error("Failed to load dashboard");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: number, category: string) => {
+    if (
+      !confirm(
+        `Are you sure you want to delete this ${category} record? This action cannot be undone.`,
+      )
+    ) {
+      return;
+    }
+
+    try {
+      await recordsAPI.delete(id);
+      toast.success("Record deleted successfully!");
+      fetchDashboard(); // Refresh the dashboard
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to delete record");
     }
   };
 
@@ -68,7 +90,7 @@ export default function DashboardPage() {
       icon: TrendingUp,
       color: "text-green-600",
       bg: "bg-green-100",
-      trend: "+12% from last week",
+      trend: `Week ${data?.currentWeek || 1}`,
     },
     {
       title: "Monthly Total",
@@ -162,7 +184,7 @@ export default function DashboardPage() {
                               className="bg-blue-600 h-2 rounded-full"
                               style={{
                                 width: `${
-                                  (amount / data?.monthlyTotal) * 100
+                                  (amount / (data?.monthlyTotal || 1)) * 100
                                 }%`,
                               }}
                             />
@@ -219,6 +241,7 @@ export default function DashboardPage() {
                   <TableHead>Category</TableHead>
                   <TableHead>Week</TableHead>
                   <TableHead className="text-right">Amount</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -234,11 +257,29 @@ export default function DashboardPage() {
                     <TableCell className="text-right font-semibold">
                       ₵{record.totalAmount.toLocaleString()}
                     </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Link href={`/records/edit/${record.id}`}>
+                          <Button variant="ghost" size="sm">
+                            <PencilIcon className="w-4 h-4 text-blue-600" />
+                          </Button>
+                        </Link>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            handleDelete(record.id, record.category)
+                          }
+                        >
+                          <Trash2 className="w-4 h-4 text-red-600" />
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
                 {(!data?.recentRecords || data.recentRecords.length === 0) && (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-8">
+                    <TableCell colSpan={5} className="text-center py-8">
                       <p className="text-gray-500">No records found</p>
                       <Link href="/records/new">
                         <Button variant="link" className="mt-2">

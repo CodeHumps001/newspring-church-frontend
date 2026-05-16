@@ -63,6 +63,7 @@ export interface CategoryTotals {
   Offering: number;
   Special_Seeds: number;
   Children_Service: number;
+  sunday_school_offering: number;
 }
 
 export const CATEGORIES = [
@@ -70,6 +71,7 @@ export const CATEGORIES = [
   "Offering",
   "Special Seeds",
   "Children Service",
+  "Sunday school offering",
 ] as const;
 
 export type Category = (typeof CATEGORIES)[number];

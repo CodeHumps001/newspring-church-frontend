@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import MainLayout from "@/components/Layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,10 +16,9 @@ import {
 } from "@/components/ui/select";
 import { recordsAPI, utilsAPI } from "@/services/api";
 import { CATEGORIES } from "@/types";
-import { Calculator } from "lucide-react";
+import { Calculator, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 
-// Simple textarea component
 const Textarea = ({
   ...props
 }: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
@@ -29,9 +28,13 @@ const Textarea = ({
   />
 );
 
-export default function NewRecordPage() {
+export default function EditRecordPage() {
   const router = useRouter();
+  const params = useParams();
+  const id = params.id as string;
+
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
   const [denominations, setDenominations] = useState<number[]>([]);
   const [quantities, setQuantities] = useState<{ [key: number]: number }>({});
   const [total, setTotal] = useState(0);
@@ -45,25 +48,47 @@ export default function NewRecordPage() {
   });
 
   useEffect(() => {
-    loadDenominations();
+    loadData();
   }, []);
 
   useEffect(() => {
     calculateTotal();
   }, [quantities]);
 
-  const loadDenominations = async () => {
+  const loadData = async () => {
     try {
-      const response = await utilsAPI.getDenominations();
-      const denoms = response.data.denominations;
+      // Load denominations
+      const denomResponse = await utilsAPI.getDenominations();
+      const denoms = denomResponse.data.denominations;
       setDenominations(denoms);
+
+      // Load record data
+      const recordResponse = await recordsAPI.getById(parseInt(id));
+      const record = recordResponse.data.data;
+
+      setFormData({
+        category: record.category,
+        weekNumber: record.weekNumber,
+        month: record.month,
+        year: record.year,
+        serviceDate: record.serviceDate.split("T")[0],
+        notes: record.notes || "",
+      });
+
+      // Load quantities
       const initialQuantities: { [key: number]: number } = {};
       denoms.forEach((d: number) => {
-        initialQuantities[d] = 0;
+        const entry = record.denominationEntries.find(
+          (e: any) => e.denomination === d,
+        );
+        initialQuantities[d] = entry ? entry.quantity : 0;
       });
       setQuantities(initialQuantities);
     } catch (error) {
-      toast.error("Failed to load denominations");
+      toast.error("Failed to load record");
+      router.push("/dashboard");
+    } finally {
+      setFetching(false);
     }
   };
 
@@ -82,7 +107,6 @@ export default function NewRecordPage() {
     }));
   };
 
-  // Fixed handlers that accept string | null
   const handleCategoryChange = (value: string | null) => {
     if (value) {
       setFormData({ ...formData, category: value });
@@ -119,29 +143,73 @@ export default function NewRecordPage() {
     }
 
     try {
-      await recordsAPI.create({
+      await recordsAPI.update(parseInt(id), {
         ...formData,
         denominations: denominationsArray,
       });
-      toast.success("Record created successfully!");
+      toast.success("Record updated successfully!");
       router.push("/dashboard");
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to create record");
+      toast.error(error.response?.data?.message || "Failed to update record");
     } finally {
       setLoading(false);
     }
   };
 
+  const handleDelete = async () => {
+    if (
+      !confirm(
+        "Are you sure you want to delete this record? This action cannot be undone.",
+      )
+    ) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await recordsAPI.delete(parseInt(id));
+      toast.success("Record deleted successfully!");
+      router.push("/dashboard");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to delete record");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (fetching) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading record...</p>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
+
   return (
     <MainLayout>
       <div className="max-w-6xl mx-auto space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            New Financial Entry
-          </h1>
-          <p className="text-gray-600 mt-1">
-            Enter church service offering details
-          </p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">
+              Edit Financial Entry
+            </h1>
+            <p className="text-gray-600 mt-1">
+              Update church service offering details
+            </p>
+          </div>
+          <Button
+            variant="destructive"
+            onClick={handleDelete}
+            disabled={loading}
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            Delete Record
+          </Button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -179,7 +247,7 @@ export default function NewRecordPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {[1, 2, 3, 4].map((week) => (
+                    {[1, 2, 3, 4, 5].map((week) => (
                       <SelectItem key={week} value={week.toString()}>
                         Week {week}
                       </SelectItem>
@@ -336,7 +404,7 @@ export default function NewRecordPage() {
               disabled={loading}
               className="bg-blue-600 hover:bg-blue-700"
             >
-              {loading ? "Saving..." : "Save Record"}
+              {loading ? "Updating..." : "Update Record"}
             </Button>
           </div>
         </form>

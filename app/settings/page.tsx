@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import MainLayout from "@/components/Layout/MainLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -22,61 +23,201 @@ import {
   User,
   Bell,
   Shield,
-  Database,
   Palette,
   Globe,
   Moon,
   Sun,
   Key,
   Save,
-  RefreshCw,
   Download,
-  Trash2,
   Church,
 } from "lucide-react";
+import { useTheme } from "next-themes";
 import toast from "react-hot-toast";
+import api from "@/services/api";
 
 export default function SettingsPage() {
-  const { user } = useAuth();
+  const { user, login } = useAuth();
+  const router = useRouter();
+  const { theme, setTheme } = useTheme();
   const [isLoading, setIsLoading] = useState(false);
-  const [theme, setTheme] = useState("light");
+  const [colorScheme, setColorScheme] = useState("blue");
+
+  // Profile form state
+  const [profileData, setProfileData] = useState({
+    email: user?.email || "",
+    fullName: "Church Administrator",
+  });
+
+  // Password form state
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+
+  useEffect(() => {
+    // Load saved color scheme from localStorage
+    const savedColor = localStorage.getItem("colorScheme");
+    if (savedColor) {
+      setColorScheme(savedColor);
+      applyColorScheme(savedColor);
+    }
+  }, []);
+
+  const applyColorScheme = (color: string) => {
+    const root = document.documentElement;
+    const colors = {
+      blue: { primary: "#3b82f6", hover: "#2563eb" },
+      green: { primary: "#22c55e", hover: "#16a34a" },
+      purple: { primary: "#a855f7", hover: "#9333ea" },
+      red: { primary: "#ef4444", hover: "#dc2626" },
+      orange: { primary: "#f97316", hover: "#ea580c" },
+    };
+
+    root.style.setProperty(
+      "--primary-color",
+      colors[color as keyof typeof colors].primary,
+    );
+    root.style.setProperty(
+      "--primary-hover",
+      colors[color as keyof typeof colors].hover,
+    );
+  };
+
+  const handleColorSchemeChange = (color: string) => {
+    setColorScheme(color);
+    localStorage.setItem("colorScheme", color);
+    applyColorScheme(color);
+    toast.success(
+      `${color.charAt(0).toUpperCase() + color.slice(1)} theme applied`,
+    );
+  };
 
   const getInitials = (email: string) => {
     return email?.substring(0, 2).toUpperCase() || "AD";
   };
 
+  // Update Profile
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
+
+    try {
+      const response = await api.put("/auth/update-profile", {
+        email: profileData.email,
+        fullName: profileData.fullName,
+      });
+
+      // Update local storage with new user data
+      localStorage.setItem("user", JSON.stringify(response.data.user));
       toast.success("Profile updated successfully!");
+
+      // Re-login to refresh token if email changed
+      if (response.data.newToken) {
+        localStorage.setItem("token", response.data.newToken);
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to update profile");
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
+  // Change Password
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast.error("New passwords do not match");
+      return;
+    }
+
+    if (passwordData.newPassword.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
+
+    try {
+      await api.put("/auth/change-password", {
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+      });
+
       toast.success("Password changed successfully!");
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to change password");
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
-  const handleExportData = () => {
-    toast.success("Data export started. You'll receive an email shortly.");
+  // Export CSV
+  const handleExportCSV = async () => {
+    setIsLoading(true);
+    try {
+      const response = await api.get("/reports/export-csv", {
+        responseType: "blob",
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute(
+        "download",
+        `church-financial-report-${new Date().toISOString().split("T")[0]}.csv`,
+      );
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      toast.success("Report exported successfully!");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to export data");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleBackupDatabase = () => {
-    toast.success("Database backup completed successfully!");
+  // Export PDF
+  const handleExportPDF = async () => {
+    setIsLoading(true);
+    try {
+      const response = await api.get("/reports/export-pdf", {
+        responseType: "blob",
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute(
+        "download",
+        `church-financial-report-${new Date().toISOString().split("T")[0]}.pdf`,
+      );
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      toast.success("PDF exported successfully!");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to export PDF");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <MainLayout>
       <div className="max-w-6xl mx-auto space-y-6">
-        {/* Header */}
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
           <p className="text-gray-600 mt-1">
@@ -85,7 +226,7 @@ export default function SettingsPage() {
         </div>
 
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-flex">
+          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-flex">
             <TabsTrigger value="profile" className="flex items-center gap-2">
               <User className="w-4 h-4" />
               <span className="hidden sm:inline">Profile</span>
@@ -97,10 +238,6 @@ export default function SettingsPage() {
             <TabsTrigger value="appearance" className="flex items-center gap-2">
               <Palette className="w-4 h-4" />
               <span className="hidden sm:inline">Appearance</span>
-            </TabsTrigger>
-            <TabsTrigger value="data" className="flex items-center gap-2">
-              <Database className="w-4 h-4" />
-              <span className="hidden sm:inline">Data</span>
             </TabsTrigger>
             <TabsTrigger value="about" className="flex items-center gap-2">
               <Church className="w-4 h-4" />
@@ -114,7 +251,7 @@ export default function SettingsPage() {
               <CardHeader>
                 <CardTitle>Profile Information</CardTitle>
                 <CardDescription>
-                  Update your account information and email preferences
+                  Update your account information
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -138,30 +275,37 @@ export default function SettingsPage() {
                 <Separator />
 
                 <form onSubmit={handleUpdateProfile} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email Address</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        defaultValue={user?.email || "admin@newspring.org"}
-                        placeholder="Enter your email"
-                      />
-                      <p className="text-xs text-gray-500">
-                        Changing email will require re-verification
-                      </p>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Full Name</Label>
-                      <Input
-                        id="name"
-                        type="text"
-                        defaultValue="Church Administrator"
-                        placeholder="Enter your full name"
-                      />
-                    </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email Address</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={profileData.email}
+                      onChange={(e) =>
+                        setProfileData({
+                          ...profileData,
+                          email: e.target.value,
+                        })
+                      }
+                      placeholder="Enter your email"
+                      required
+                    />
                   </div>
-
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Full Name</Label>
+                    <Input
+                      id="name"
+                      type="text"
+                      value={profileData.fullName}
+                      onChange={(e) =>
+                        setProfileData({
+                          ...profileData,
+                          fullName: e.target.value,
+                        })
+                      }
+                      placeholder="Enter your full name"
+                    />
+                  </div>
                   <div className="flex justify-end">
                     <Button type="submit" disabled={isLoading}>
                       <Save className="w-4 h-4 mr-2" />
@@ -178,9 +322,7 @@ export default function SettingsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Security Settings</CardTitle>
-                <CardDescription>
-                  Manage your password and security preferences
-                </CardDescription>
+                <CardDescription>Change your password</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <form onSubmit={handleChangePassword} className="space-y-4">
@@ -189,6 +331,13 @@ export default function SettingsPage() {
                     <Input
                       id="current-password"
                       type="password"
+                      value={passwordData.currentPassword}
+                      onChange={(e) =>
+                        setPasswordData({
+                          ...passwordData,
+                          currentPassword: e.target.value,
+                        })
+                      }
                       placeholder="Enter current password"
                       required
                     />
@@ -198,11 +347,18 @@ export default function SettingsPage() {
                     <Input
                       id="new-password"
                       type="password"
+                      value={passwordData.newPassword}
+                      onChange={(e) =>
+                        setPasswordData({
+                          ...passwordData,
+                          newPassword: e.target.value,
+                        })
+                      }
                       placeholder="Enter new password"
                       required
                     />
                     <p className="text-xs text-gray-500">
-                      Password must be at least 8 characters long
+                      Password must be at least 6 characters long
                     </p>
                   </div>
                   <div className="space-y-2">
@@ -210,6 +366,13 @@ export default function SettingsPage() {
                     <Input
                       id="confirm-password"
                       type="password"
+                      value={passwordData.confirmPassword}
+                      onChange={(e) =>
+                        setPasswordData({
+                          ...passwordData,
+                          confirmPassword: e.target.value,
+                        })
+                      }
                       placeholder="Confirm new password"
                       required
                     />
@@ -225,17 +388,24 @@ export default function SettingsPage() {
                 <Separator />
 
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">
-                    Two-Factor Authentication
-                  </h3>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">Enable 2FA</p>
-                      <p className="text-sm text-gray-500">
-                        Add an extra layer of security to your account
-                      </p>
-                    </div>
-                    <Switch />
+                  <h3 className="text-lg font-semibold">Data Export</h3>
+                  <div className="flex gap-4">
+                    <Button
+                      onClick={handleExportCSV}
+                      variant="outline"
+                      disabled={isLoading}
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Export CSV
+                    </Button>
+                    <Button
+                      onClick={handleExportPDF}
+                      variant="outline"
+                      disabled={isLoading}
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Export PDF
+                    </Button>
                   </div>
                 </div>
               </CardContent>
@@ -279,7 +449,7 @@ export default function SettingsPage() {
                     >
                       <Moon className="w-8 h-8 mx-auto mb-2 text-gray-700" />
                       <p className="font-medium">Dark</p>
-                      <p className="text-xs text-gray-500">Coming soon</p>
+                      <p className="text-xs text-gray-500">Modern dark theme</p>
                     </button>
                   </div>
                 </div>
@@ -289,74 +459,31 @@ export default function SettingsPage() {
                 <div className="space-y-4">
                   <Label>Color Scheme</Label>
                   <div className="flex gap-3">
-                    <button className="w-10 h-10 rounded-full bg-blue-600 ring-2 ring-blue-600 ring-offset-2" />
-                    <button className="w-10 h-10 rounded-full bg-green-600 hover:ring-2 hover:ring-green-600 hover:ring-offset-2" />
-                    <button className="w-10 h-10 rounded-full bg-purple-600 hover:ring-2 hover:ring-purple-600 hover:ring-offset-2" />
-                    <button className="w-10 h-10 rounded-full bg-red-600 hover:ring-2 hover:ring-red-600 hover:ring-offset-2" />
-                    <button className="w-10 h-10 rounded-full bg-orange-600 hover:ring-2 hover:ring-orange-600 hover:ring-offset-2" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Data Tab */}
-          <TabsContent value="data">
-            <Card>
-              <CardHeader>
-                <CardTitle>Data Management</CardTitle>
-                <CardDescription>
-                  Export, backup, or manage your church financial data
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                    <div>
-                      <h3 className="font-semibold">Export Financial Data</h3>
-                      <p className="text-sm text-gray-500">
-                        Download all records as CSV or Excel
-                      </p>
-                    </div>
-                    <Button onClick={handleExportData} variant="outline">
-                      <Download className="w-4 h-4 mr-2" />
-                      Export
-                    </Button>
-                  </div>
-
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                    <div>
-                      <h3 className="font-semibold">Backup Database</h3>
-                      <p className="text-sm text-gray-500">
-                        Create a full backup of your database
-                      </p>
-                    </div>
-                    <Button onClick={handleBackupDatabase} variant="outline">
-                      <RefreshCw className="w-4 h-4 mr-2" />
-                      Backup Now
-                    </Button>
-                  </div>
-
-                  <Separator />
-
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-red-600">
-                      Danger Zone
-                    </h3>
-                    <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg border border-red-200">
-                      <div>
-                        <h3 className="font-semibold text-red-700">
-                          Delete All Data
-                        </h3>
-                        <p className="text-sm text-red-600">
-                          Permanently delete all financial records
-                        </p>
-                      </div>
-                      <Button variant="destructive">
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Delete All
-                      </Button>
-                    </div>
+                    {["blue", "green", "purple", "red", "orange"].map(
+                      (color) => (
+                        <button
+                          key={color}
+                          onClick={() => handleColorSchemeChange(color)}
+                          className={`w-10 h-10 rounded-full transition-all ${
+                            colorScheme === color
+                              ? "ring-2 ring-offset-2 ring-gray-400 scale-110"
+                              : ""
+                          }`}
+                          style={{
+                            backgroundColor:
+                              color === "blue"
+                                ? "#3b82f6"
+                                : color === "green"
+                                  ? "#22c55e"
+                                  : color === "purple"
+                                    ? "#a855f7"
+                                    : color === "red"
+                                      ? "#ef4444"
+                                      : "#f97316",
+                          }}
+                        />
+                      ),
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -384,7 +511,7 @@ export default function SettingsPage() {
                     Church Financial Management System
                   </p>
                   <Badge variant="secondary" className="mt-2">
-                    Version 1.0.0
+                    Version 2.0.0
                   </Badge>
                 </div>
 
@@ -398,8 +525,9 @@ export default function SettingsPage() {
                       <li>• Children Service financial management</li>
                       <li>• Automated denomination calculations</li>
                       <li>• Monthly and weekly reporting</li>
-                      <li>• PDF report generation</li>
-                      <li>• Secure admin authentication</li>
+                      <li>• CSV and PDF export</li>
+                      <li>• Edit and delete records</li>
+                      <li>• Dark/Light theme support</li>
                     </ul>
                   </div>
 
@@ -410,17 +538,6 @@ export default function SettingsPage() {
                     </p>
                     <p className="text-sm text-blue-600 mt-1">
                       support@newspringchapel.org
-                    </p>
-                  </div>
-
-                  <div>
-                    <h3 className="font-semibold text-gray-900">Address</h3>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Newspring Chapel A/G
-                      <br />
-                      Your Church Address Here
-                      <br />
-                      Ghana
                     </p>
                   </div>
                 </div>
