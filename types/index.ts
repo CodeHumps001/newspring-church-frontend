@@ -71,7 +71,7 @@ export const CATEGORIES = [
   "Offering",
   "Special Seeds",
   "Children Service",
-  "Sunday school offering",
+  "Sunday School Offering",
 ] as const;
 
 export type Category = (typeof CATEGORIES)[number];
