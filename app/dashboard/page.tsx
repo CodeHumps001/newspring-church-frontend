@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -17,28 +16,36 @@ import {
   TrendingUp,
   TrendingDown,
   Calendar,
-  Users,
   Church,
   DollarSign,
   Plus,
-  Eye,
   PencilIcon,
   Trash2,
+  Wallet,
+  PieChart,
 } from "lucide-react";
 import MainLayout from "@/components/Layout/MainLayout";
-import { reportsAPI, recordsAPI } from "@/services/api";
+import { reportsAPI, recordsAPI, expenseAPI } from "@/services/api";
 import { DashboardData } from "@/types";
 import toast from "react-hot-toast";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+
+interface ExpenseData {
+  monthlyTotal: number;
+  categoryBreakdown: Record<string, number>;
+  recentExpenses: any[];
+  count: number;
+}
 
 export default function DashboardPage() {
-  const router = useRouter();
   const [data, setData] = useState<DashboardData | null>(null);
+  const [expenseData, setExpenseData] = useState<ExpenseData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<"income" | "expenses">("income");
 
   useEffect(() => {
     fetchDashboard();
+    fetchExpenses();
   }, []);
 
   const fetchDashboard = async () => {
@@ -47,12 +54,21 @@ export default function DashboardPage() {
       setData(response.data.data);
     } catch (error) {
       toast.error("Failed to load dashboard");
+    }
+  };
+
+  const fetchExpenses = async () => {
+    try {
+      const response = await reportsAPI.getExpenseSummary();
+      setExpenseData(response.data.data);
+    } catch (error) {
+      console.error("Failed to load expenses:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = async (id: number, category: string) => {
+  const handleDeleteIncome = async (id: number, category: string) => {
     if (
       !confirm(
         `Are you sure you want to delete this ${category} record? This action cannot be undone.`,
@@ -64,11 +80,34 @@ export default function DashboardPage() {
     try {
       await recordsAPI.delete(id);
       toast.success("Record deleted successfully!");
-      fetchDashboard(); // Refresh the dashboard
+      fetchDashboard();
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to delete record");
     }
   };
+
+  const handleDeleteExpense = async (id: number, description: string) => {
+    if (
+      !confirm(
+        `Are you sure you want to delete this expense: "${description}"? This action cannot be undone.`,
+      )
+    ) {
+      return;
+    }
+
+    try {
+      await expenseAPI.delete(id);
+      toast.success("Expense deleted successfully!");
+      fetchExpenses();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to delete expense");
+    }
+  };
+
+  const incomeTotal = data?.monthlyTotal || 0;
+  const expenseTotal = expenseData?.monthlyTotal || 0;
+  const netBalance = incomeTotal - expenseTotal;
+  const isPositive = netBalance >= 0;
 
   if (loading) {
     return (
@@ -85,20 +124,28 @@ export default function DashboardPage() {
 
   const stats = [
     {
-      title: "Week Total",
-      value: `₵${data?.weeklyTotal?.toLocaleString() || "0"}`,
+      title: "Total Income",
+      value: `₵${incomeTotal.toLocaleString()}`,
       icon: TrendingUp,
       color: "text-green-600",
       bg: "bg-green-100",
-      trend: `Week ${data?.currentWeek || 1}`,
+      trend: `${data?.currentMonth || ""} ${data?.currentYear || ""}`,
     },
     {
-      title: "Monthly Total",
-      value: `₵${data?.monthlyTotal?.toLocaleString() || "0"}`,
-      icon: DollarSign,
-      color: "text-blue-600",
-      bg: "bg-blue-100",
-      trend: `${data?.currentMonth || ""} ${data?.currentYear || ""}`,
+      title: "Total Expenses",
+      value: `₵${expenseTotal.toLocaleString()}`,
+      icon: TrendingDown,
+      color: "text-red-600",
+      bg: "bg-red-100",
+      trend: `${Object.keys(expenseData?.categoryBreakdown || {}).length} categories`,
+    },
+    {
+      title: "Net Balance",
+      value: `₵${netBalance.toLocaleString()}`,
+      icon: Wallet,
+      color: isPositive ? "text-green-600" : "text-red-600",
+      bg: isPositive ? "bg-green-100" : "bg-red-100",
+      trend: isPositive ? "Surplus" : "Deficit",
     },
     {
       title: "This Week",
@@ -107,14 +154,6 @@ export default function DashboardPage() {
       color: "text-purple-600",
       bg: "bg-purple-100",
       trend: `${data?.currentMonth || ""} ${data?.currentYear || ""}`,
-    },
-    {
-      title: "Categories",
-      value: Object.keys(data?.categoryBreakdown || {}).length,
-      icon: Church,
-      color: "text-orange-600",
-      bg: "bg-orange-100",
-      trend: "Active categories",
     },
   ];
 
@@ -129,12 +168,23 @@ export default function DashboardPage() {
               Welcome back! Here's your church financial overview
             </p>
           </div>
-          <Link href="/records/new">
-            <Button className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="w-4 h-4 mr-2" />
-              New Entry
-            </Button>
-          </Link>
+          <div className="flex gap-2">
+            <Link href="/records/new">
+              <Button className="bg-blue-600 hover:bg-blue-700">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Income
+              </Button>
+            </Link>
+            <Link href="/expenses/new">
+              <Button
+                variant="outline"
+                className="border-red-300 text-red-600 hover:bg-red-50"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Expense
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* Stats Grid */}
@@ -157,12 +207,15 @@ export default function DashboardPage() {
           ))}
         </div>
 
-        {/* Charts and Details */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Category Breakdown */}
-          <Card className="lg:col-span-1">
+        {/* Income vs Expense Chart Cards */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Income Categories */}
+          <Card>
             <CardHeader>
-              <CardTitle>Category Breakdown</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-green-600" />
+                Income by Category
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -175,17 +228,15 @@ export default function DashboardPage() {
                             <span className="text-gray-600">
                               {category.replace("_", " ")}
                             </span>
-                            <span className="font-semibold">
+                            <span className="font-semibold text-green-600">
                               ₵{amount.toLocaleString()}
                             </span>
                           </div>
                           <div className="w-full bg-gray-200 rounded-full h-2">
                             <div
-                              className="bg-blue-600 h-2 rounded-full"
+                              className="bg-green-600 h-2 rounded-full"
                               style={{
-                                width: `${
-                                  (amount / (data?.monthlyTotal || 1)) * 100
-                                }%`,
+                                width: `${(amount / (incomeTotal || 1)) * 100}%`,
                               }}
                             />
                           </div>
@@ -197,100 +248,214 @@ export default function DashboardPage() {
                     (v) => v === 0,
                   )) && (
                   <p className="text-gray-500 text-center py-8">
-                    No data available
+                    No income data available
                   </p>
                 )}
               </div>
             </CardContent>
           </Card>
 
-          {/* Quick Actions */}
-          <Card className="lg:col-span-2">
+          {/* Expense Categories */}
+          <Card>
             <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingDown className="w-5 h-5 text-red-600" />
+                Expenses by Category
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 gap-4">
-                <Link href="/records/new">
-                  <Button variant="outline" className="w-full h-24 flex-col">
-                    <Plus className="w-8 h-8 mb-2 text-blue-600" />
-                    <span>Add New Record</span>
-                  </Button>
-                </Link>
-                <Link href="/reports/monthly">
-                  <Button variant="outline" className="w-full h-24 flex-col">
-                    <Calendar className="w-8 h-8 mb-2 text-green-600" />
-                    <span>Generate Report</span>
-                  </Button>
-                </Link>
+              <div className="space-y-4">
+                {expenseData?.categoryBreakdown &&
+                  Object.entries(expenseData.categoryBreakdown).map(
+                    ([category, amount]) =>
+                      amount > 0 && (
+                        <div key={category}>
+                          <div className="flex justify-between text-sm mb-1">
+                            <span className="text-gray-600">{category}</span>
+                            <span className="font-semibold text-red-600">
+                              ₵{amount.toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div
+                              className="bg-red-600 h-2 rounded-full"
+                              style={{
+                                width: `${(amount / (expenseTotal || 1)) * 100}%`,
+                              }}
+                            />
+                          </div>
+                        </div>
+                      ),
+                  )}
+                {(!expenseData?.categoryBreakdown ||
+                  Object.values(expenseData.categoryBreakdown).length ===
+                    0) && (
+                  <p className="text-gray-500 text-center py-8">
+                    No expense data available
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Recent Records Table */}
+        {/* Recent Records and Expenses Tabs */}
         <Card>
           <CardHeader>
-            <CardTitle>Recent Records</CardTitle>
+            <div className="flex gap-4 border-b pb-4">
+              <button
+                onClick={() => setActiveTab("income")}
+                className={`px-4 py-2 font-medium transition-colors ${
+                  activeTab === "income"
+                    ? "text-blue-600 border-b-2 border-blue-600"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                Recent Income
+              </button>
+              <button
+                onClick={() => setActiveTab("expenses")}
+                className={`px-4 py-2 font-medium transition-colors ${
+                  activeTab === "expenses"
+                    ? "text-blue-600 border-b-2 border-blue-600"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                Recent Expenses
+              </button>
+            </div>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Week</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data?.recentRecords?.map((record) => (
-                  <TableRow key={record.id}>
-                    <TableCell>
-                      {new Date(record.serviceDate).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">{record.category}</Badge>
-                    </TableCell>
-                    <TableCell>Week {record.weekNumber}</TableCell>
-                    <TableCell className="text-right font-semibold">
-                      ₵{record.totalAmount.toLocaleString()}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Link href={`/records/edit/${record.id}`}>
-                          <Button variant="ghost" size="sm">
-                            <PencilIcon className="w-4 h-4 text-blue-600" />
+            {activeTab === "income" ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Week</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {data?.recentRecords?.map((record) => (
+                    <TableRow key={record.id}>
+                      <TableCell>
+                        {new Date(record.serviceDate).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">{record.category}</Badge>
+                      </TableCell>
+                      <TableCell>Week {record.weekNumber}</TableCell>
+                      <TableCell className="text-right font-semibold text-green-600">
+                        ₵{record.totalAmount.toLocaleString()}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Link href={`/records/edit/${record.id}`}>
+                            <Button variant="ghost" size="sm">
+                              <PencilIcon className="w-4 h-4 text-blue-600" />
+                            </Button>
+                          </Link>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              handleDeleteIncome(record.id, record.category)
+                            }
+                          >
+                            <Trash2 className="w-4 h-4 text-red-600" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {(!data?.recentRecords ||
+                    data.recentRecords.length === 0) && (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-8">
+                        <p className="text-gray-500">No income records found</p>
+                        <Link href="/records/new">
+                          <Button variant="link" className="mt-2">
+                            Create your first record
                           </Button>
                         </Link>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            handleDelete(record.id, record.category)
-                          }
-                        >
-                          <Trash2 className="w-4 h-4 text-red-600" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {(!data?.recentRecords || data.recentRecords.length === 0) && (
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            ) : (
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8">
-                      <p className="text-gray-500">No records found</p>
-                      <Link href="/records/new">
-                        <Button variant="link" className="mt-2">
-                          Create your first record
-                        </Button>
-                      </Link>
-                    </TableCell>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead>Payment Method</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {expenseData?.recentExpenses?.map((expense) => (
+                    <TableRow key={expense.id}>
+                      <TableCell>
+                        {new Date(expense.date).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-red-600">
+                          {expense.category}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="max-w-xs truncate">
+                        {expense.description}
+                      </TableCell>
+                      <TableCell>{expense.paymentMethod}</TableCell>
+                      <TableCell className="text-right font-semibold text-red-600">
+                        ₵{parseFloat(expense.amount).toLocaleString()}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Link href={`/expenses/edit/${expense.id}`}>
+                            <Button variant="ghost" size="sm">
+                              <PencilIcon className="w-4 h-4 text-blue-600" />
+                            </Button>
+                          </Link>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              handleDeleteExpense(
+                                expense.id,
+                                expense.description,
+                              )
+                            }
+                          >
+                            <Trash2 className="w-4 h-4 text-red-600" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {(!expenseData?.recentExpenses ||
+                    expenseData.recentExpenses.length === 0) && (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8">
+                        <p className="text-gray-500">
+                          No expense records found
+                        </p>
+                        <Link href="/expenses/new">
+                          <Button variant="link" className="mt-2">
+                            Record your first expense
+                          </Button>
+                        </Link>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
       </div>

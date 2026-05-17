@@ -59,6 +59,7 @@ export const reportsAPI = {
     api.get("/reports/monthly", { params: { month, year } }),
   getWeekly: (year: number, month: number, weekNumber?: number) =>
     api.get("/reports/weekly", { params: { year, month, weekNumber } }),
+  getExpenseSummary: () => api.get("/reports/expense-summary"), // ADD THIS LINE
 };
 
 export const utilsAPI = {
