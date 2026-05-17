@@ -65,4 +65,13 @@ export const utilsAPI = {
   getDenominations: () => api.get("/denominations"),
 };
 
+// Add expense API
+export const expenseAPI = {
+  create: (data: any) => api.post("/expenses", data),
+  getAll: (params?: any) => api.get("/expenses", { params }),
+  getById: (id: number) => api.get(`/expenses/${id}`),
+  update: (id: number, data: any) => api.put(`/expenses/${id}`, data),
+  delete: (id: number) => api.delete(`/expenses/${id}`),
+};
+
 export default api;

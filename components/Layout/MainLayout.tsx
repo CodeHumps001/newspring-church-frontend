@@ -22,11 +22,15 @@ import {
   CogIcon,
   ArrowRightOnRectangleIcon,
   Bars3Icon,
+  CreditCardIcon,
 } from "@heroicons/react/24/outline";
+import MobileBottomNav from "./MobileBottomNav";
+import FloatingActionButton from "./FloatingActionButton";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: HomeIcon },
   { name: "New Entry", href: "/records/new", icon: PlusCircleIcon },
+  { name: "Record Expense", href: "/expenses/new", icon: CreditCardIcon },
   {
     name: "Monthly Report",
     href: "/reports/monthly",
@@ -49,9 +53,12 @@ export default function MainLayout({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Mobile Navigation */}
-      <div className="lg:hidden border-b bg-white sticky top-0 z-50">
+    <div className="min-h-screen bg-gray-50 pb-16 lg:pb-0">
+      {/* Mobile Bottom Navigation - Only visible on mobile */}
+      <MobileBottomNav />
+
+      {/* Mobile Sidebar (Hamburger Menu) - Keep for additional options */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b">
         <div className="flex items-center justify-between px-4 h-16">
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger>
@@ -125,7 +132,7 @@ export default function MainLayout({
         </div>
       </div>
 
-      {/* Desktop Navigation */}
+      {/* Desktop Sidebar - Hidden on mobile */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
         <div className="flex flex-col flex-1 bg-white border-r">
           <div className="flex items-center justify-center h-16 px-4 border-b">
@@ -178,9 +185,14 @@ export default function MainLayout({
         </div>
       </div>
 
-      {/* Main content */}
+      {/* Main content - Add padding-bottom on mobile for bottom nav */}
       <div className="lg:pl-64">
-        <main className="p-4 lg:p-8">{children}</main>
+        {/* Mobile top padding for header */}
+        <div className="lg:hidden h-16" />
+        <main className="p-4 lg:p-8 pb-20 lg:pb-8">
+          {children}
+          <FloatingActionButton />
+        </main>
       </div>
     </div>
   );

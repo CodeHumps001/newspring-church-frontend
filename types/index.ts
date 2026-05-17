@@ -74,4 +74,44 @@ export const CATEGORIES = [
   "Sunday School Offering",
 ] as const;
 
+// Add after your existing types
+export const EXPENSE_CATEGORIES = [
+  "Church Utilities",
+  "Missionary Support",
+  "Outreach Programs",
+  "Church Maintenance",
+  "Staff Salary",
+  "Children Ministry",
+  "Youth Programs",
+  "Worship & Music",
+  "Administrative",
+  "Benevolence",
+  "Special Events",
+  "Transportation",
+  "Other",
+] as const;
+
+export type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number];
+
+export const PAYMENT_METHODS = [
+  "Cash",
+  "Bank Transfer",
+  "Mobile Money",
+  "Check",
+] as const;
+
+export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
+
+export interface Expense {
+  id: number;
+  userId: number;
+  category: string;
+  amount: number;
+  description: string;
+  date: string;
+  paymentMethod: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export type Category = (typeof CATEGORIES)[number];
