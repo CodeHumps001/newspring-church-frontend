@@ -16,11 +16,11 @@ import {
   TrendingUp,
   TrendingDown,
   Calendar,
-  Church,
   DollarSign,
   PencilIcon,
   Trash2,
   Wallet,
+  Plus,
 } from "lucide-react";
 import MainLayout from "@/components/Layout/MainLayout";
 import { reportsAPI, recordsAPI, expenseAPI } from "@/services/api";
@@ -158,14 +158,33 @@ export default function DashboardPage() {
   return (
     <MainLayout>
       <div className="space-y-4 sm:space-y-6">
-        {/* Header - Removed buttons for mobile since FAB exists */}
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-            Dashboard
-          </h1>
-          <p className="text-sm sm:text-base text-gray-600 mt-1">
-            Welcome back! Here's your church financial overview
-          </p>
+        {/* Header - Buttons visible on desktop, hidden on mobile */}
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+              Dashboard
+            </h1>
+            <p className="text-sm sm:text-base text-gray-600 mt-1">
+              Welcome back! Here's your church financial overview
+            </p>
+          </div>
+          <div className="hidden sm:flex gap-2">
+            <Link href="/records/new">
+              <Button className="bg-blue-600 hover:bg-blue-700">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Income
+              </Button>
+            </Link>
+            <Link href="/expenses/new">
+              <Button
+                variant="outline"
+                className="border-red-300 text-red-600 hover:bg-red-50"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Expense
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* Stats Grid - Responsive */}
