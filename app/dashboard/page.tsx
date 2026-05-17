@@ -18,11 +18,9 @@ import {
   Calendar,
   Church,
   DollarSign,
-  Plus,
   PencilIcon,
   Trash2,
   Wallet,
-  PieChart,
 } from "lucide-react";
 import MainLayout from "@/components/Layout/MainLayout";
 import { reportsAPI, recordsAPI, expenseAPI } from "@/services/api";
@@ -159,82 +157,71 @@ export default function DashboardPage() {
 
   return (
     <MainLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-            <p className="text-gray-600 mt-1">
-              Welcome back! Here's your church financial overview
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Link href="/records/new">
-              <Button className="bg-blue-600 hover:bg-blue-700">
-                <Plus className="w-4 h-4 mr-2" />
-                Add Income
-              </Button>
-            </Link>
-            <Link href="/expenses/new">
-              <Button
-                variant="outline"
-                className="border-red-300 text-red-600 hover:bg-red-50"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Expense
-              </Button>
-            </Link>
-          </div>
+      <div className="space-y-4 sm:space-y-6">
+        {/* Header - Removed buttons for mobile since FAB exists */}
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+            Dashboard
+          </h1>
+          <p className="text-sm sm:text-base text-gray-600 mt-1">
+            Welcome back! Here's your church financial overview
+          </p>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Stats Grid - Responsive */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
           {stats.map((stat, index) => (
             <Card key={index} className="hover:shadow-lg transition-shadow">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">
+              <CardHeader className="flex flex-row items-center justify-between pb-2 p-3 sm:p-6">
+                <CardTitle className="text-xs sm:text-sm font-medium text-gray-600">
                   {stat.title}
                 </CardTitle>
-                <div className={`${stat.bg} p-2 rounded-full`}>
-                  <stat.icon className={`w-4 h-4 ${stat.color}`} />
+                <div className={`${stat.bg} p-1.5 sm:p-2 rounded-full`}>
+                  <stat.icon
+                    className={`w-3 h-3 sm:w-4 sm:h-4 ${stat.color}`}
+                  />
                 </div>
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stat.value}</div>
-                <p className="text-xs text-gray-500 mt-1">{stat.trend}</p>
+              <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+                <div className="text-sm sm:text-2xl font-bold truncate">
+                  {stat.value}
+                </div>
+                <p className="text-xs text-gray-500 mt-1 truncate">
+                  {stat.trend}
+                </p>
               </CardContent>
             </Card>
           ))}
         </div>
 
-        {/* Income vs Expense Chart Cards */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Income vs Expense Chart Cards - Responsive */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           {/* Income Categories */}
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-green-600" />
+            <CardHeader className="p-4 sm:p-6">
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
                 Income by Category
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
+            <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+              <div className="space-y-3 sm:space-y-4">
                 {data?.categoryBreakdown &&
                   Object.entries(data.categoryBreakdown).map(
                     ([category, amount]) =>
                       amount > 0 && (
                         <div key={category}>
-                          <div className="flex justify-between text-sm mb-1">
-                            <span className="text-gray-600">
+                          <div className="flex justify-between text-xs sm:text-sm mb-1">
+                            <span className="text-gray-600 truncate">
                               {category.replace("_", " ")}
                             </span>
-                            <span className="font-semibold text-green-600">
+                            <span className="font-semibold text-green-600 ml-2">
                               ₵{amount.toLocaleString()}
                             </span>
                           </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div className="w-full bg-gray-200 rounded-full h-1.5 sm:h-2">
                             <div
-                              className="bg-green-600 h-2 rounded-full"
+                              className="bg-green-600 h-1.5 sm:h-2 rounded-full"
                               style={{
                                 width: `${(amount / (incomeTotal || 1)) * 100}%`,
                               }}
@@ -247,7 +234,7 @@ export default function DashboardPage() {
                   Object.values(data.categoryBreakdown).every(
                     (v) => v === 0,
                   )) && (
-                  <p className="text-gray-500 text-center py-8">
+                  <p className="text-gray-500 text-center py-8 text-sm">
                     No income data available
                   </p>
                 )}
@@ -257,28 +244,30 @@ export default function DashboardPage() {
 
           {/* Expense Categories */}
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingDown className="w-5 h-5 text-red-600" />
+            <CardHeader className="p-4 sm:p-6">
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <TrendingDown className="w-4 h-4 sm:w-5 sm:h-5 text-red-600" />
                 Expenses by Category
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
+            <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+              <div className="space-y-3 sm:space-y-4">
                 {expenseData?.categoryBreakdown &&
                   Object.entries(expenseData.categoryBreakdown).map(
                     ([category, amount]) =>
                       amount > 0 && (
                         <div key={category}>
-                          <div className="flex justify-between text-sm mb-1">
-                            <span className="text-gray-600">{category}</span>
-                            <span className="font-semibold text-red-600">
+                          <div className="flex justify-between text-xs sm:text-sm mb-1">
+                            <span className="text-gray-600 truncate">
+                              {category}
+                            </span>
+                            <span className="font-semibold text-red-600 ml-2">
                               ₵{amount.toLocaleString()}
                             </span>
                           </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div className="w-full bg-gray-200 rounded-full h-1.5 sm:h-2">
                             <div
-                              className="bg-red-600 h-2 rounded-full"
+                              className="bg-red-600 h-1.5 sm:h-2 rounded-full"
                               style={{
                                 width: `${(amount / (expenseTotal || 1)) * 100}%`,
                               }}
@@ -290,7 +279,7 @@ export default function DashboardPage() {
                 {(!expenseData?.categoryBreakdown ||
                   Object.values(expenseData.categoryBreakdown).length ===
                     0) && (
-                  <p className="text-gray-500 text-center py-8">
+                  <p className="text-gray-500 text-center py-8 text-sm">
                     No expense data available
                   </p>
                 )}
@@ -299,13 +288,13 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        {/* Recent Records and Expenses Tabs */}
+        {/* Recent Records and Expenses Tabs - Responsive Table */}
         <Card>
-          <CardHeader>
-            <div className="flex gap-4 border-b pb-4">
+          <CardHeader className="p-4 sm:p-6">
+            <div className="flex gap-4 border-b pb-3 sm:pb-4 overflow-x-auto">
               <button
                 onClick={() => setActiveTab("income")}
-                className={`px-4 py-2 font-medium transition-colors ${
+                className={`px-3 sm:px-4 py-1.5 sm:py-2 font-medium transition-colors text-sm sm:text-base whitespace-nowrap ${
                   activeTab === "income"
                     ? "text-blue-600 border-b-2 border-blue-600"
                     : "text-gray-500 hover:text-gray-700"
@@ -315,7 +304,7 @@ export default function DashboardPage() {
               </button>
               <button
                 onClick={() => setActiveTab("expenses")}
-                className={`px-4 py-2 font-medium transition-colors ${
+                className={`px-3 sm:px-4 py-1.5 sm:py-2 font-medium transition-colors text-sm sm:text-base whitespace-nowrap ${
                   activeTab === "expenses"
                     ? "text-blue-600 border-b-2 border-blue-600"
                     : "text-gray-500 hover:text-gray-700"
@@ -325,136 +314,179 @@ export default function DashboardPage() {
               </button>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0 sm:p-6 sm:pt-0 overflow-x-auto">
             {activeTab === "income" ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Week</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {data?.recentRecords?.map((record) => (
-                    <TableRow key={record.id}>
-                      <TableCell>
-                        {new Date(record.serviceDate).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">{record.category}</Badge>
-                      </TableCell>
-                      <TableCell>Week {record.weekNumber}</TableCell>
-                      <TableCell className="text-right font-semibold text-green-600">
-                        ₵{record.totalAmount.toLocaleString()}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Link href={`/records/edit/${record.id}`}>
-                            <Button variant="ghost" size="sm">
-                              <PencilIcon className="w-4 h-4 text-blue-600" />
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-xs sm:text-sm">Date</TableHead>
+                      <TableHead className="text-xs sm:text-sm">
+                        Category
+                      </TableHead>
+                      <TableHead className="text-xs sm:text-sm hidden sm:table-cell">
+                        Week
+                      </TableHead>
+                      <TableHead className="text-right text-xs sm:text-sm">
+                        Amount
+                      </TableHead>
+                      <TableHead className="text-right text-xs sm:text-sm">
+                        Actions
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {data?.recentRecords?.map((record) => (
+                      <TableRow key={record.id}>
+                        <TableCell className="text-xs sm:text-sm">
+                          {new Date(record.serviceDate).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="secondary" className="text-xs">
+                            {record.category}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-xs sm:text-sm hidden sm:table-cell">
+                          Week {record.weekNumber}
+                        </TableCell>
+                        <TableCell className="text-right font-semibold text-green-600 text-xs sm:text-sm">
+                          ₵{record.totalAmount.toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-1 sm:gap-2">
+                            <Link href={`/records/edit/${record.id}`}>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                              >
+                                <PencilIcon className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600" />
+                              </Button>
+                            </Link>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                              onClick={() =>
+                                handleDeleteIncome(record.id, record.category)
+                              }
+                            >
+                              <Trash2 className="w-3 h-3 sm:w-4 sm:h-4 text-red-600" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {(!data?.recentRecords ||
+                      data.recentRecords.length === 0) && (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-8">
+                          <p className="text-gray-500 text-sm">
+                            No income records found
+                          </p>
+                          <Link href="/records/new">
+                            <Button variant="link" className="mt-2 text-sm">
+                              Create your first record
                             </Button>
                           </Link>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() =>
-                              handleDeleteIncome(record.id, record.category)
-                            }
-                          >
-                            <Trash2 className="w-4 h-4 text-red-600" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {(!data?.recentRecords ||
-                    data.recentRecords.length === 0) && (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8">
-                        <p className="text-gray-500">No income records found</p>
-                        <Link href="/records/new">
-                          <Button variant="link" className="mt-2">
-                            Create your first record
-                          </Button>
-                        </Link>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead>Payment Method</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {expenseData?.recentExpenses?.map((expense) => (
-                    <TableRow key={expense.id}>
-                      <TableCell>
-                        {new Date(expense.date).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="text-red-600">
-                          {expense.category}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="max-w-xs truncate">
-                        {expense.description}
-                      </TableCell>
-                      <TableCell>{expense.paymentMethod}</TableCell>
-                      <TableCell className="text-right font-semibold text-red-600">
-                        ₵{parseFloat(expense.amount).toLocaleString()}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Link href={`/expenses/edit/${expense.id}`}>
-                            <Button variant="ghost" size="sm">
-                              <PencilIcon className="w-4 h-4 text-blue-600" />
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-xs sm:text-sm">Date</TableHead>
+                      <TableHead className="text-xs sm:text-sm">
+                        Category
+                      </TableHead>
+                      <TableHead className="text-xs sm:text-sm hidden md:table-cell">
+                        Description
+                      </TableHead>
+                      <TableHead className="text-xs sm:text-sm hidden lg:table-cell">
+                        Payment
+                      </TableHead>
+                      <TableHead className="text-right text-xs sm:text-sm">
+                        Amount
+                      </TableHead>
+                      <TableHead className="text-right text-xs sm:text-sm">
+                        Actions
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {expenseData?.recentExpenses?.map((expense) => (
+                      <TableRow key={expense.id}>
+                        <TableCell className="text-xs sm:text-sm">
+                          {new Date(expense.date).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant="outline"
+                            className="text-red-600 text-xs"
+                          >
+                            {expense.category}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-xs sm:text-sm hidden md:table-cell max-w-[150px] truncate">
+                          {expense.description}
+                        </TableCell>
+                        <TableCell className="text-xs sm:text-sm hidden lg:table-cell">
+                          {expense.paymentMethod}
+                        </TableCell>
+                        <TableCell className="text-right font-semibold text-red-600 text-xs sm:text-sm">
+                          ₵{parseFloat(expense.amount).toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-1 sm:gap-2">
+                            <Link href={`/expenses/edit/${expense.id}`}>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                              >
+                                <PencilIcon className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600" />
+                              </Button>
+                            </Link>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                              onClick={() =>
+                                handleDeleteExpense(
+                                  expense.id,
+                                  expense.description,
+                                )
+                              }
+                            >
+                              <Trash2 className="w-3 h-3 sm:w-4 sm:h-4 text-red-600" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {(!expenseData?.recentExpenses ||
+                      expenseData.recentExpenses.length === 0) && (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-8">
+                          <p className="text-gray-500 text-sm">
+                            No expense records found
+                          </p>
+                          <Link href="/expenses/new">
+                            <Button variant="link" className="mt-2 text-sm">
+                              Record your first expense
                             </Button>
                           </Link>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() =>
-                              handleDeleteExpense(
-                                expense.id,
-                                expense.description,
-                              )
-                            }
-                          >
-                            <Trash2 className="w-4 h-4 text-red-600" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {(!expenseData?.recentExpenses ||
-                    expenseData.recentExpenses.length === 0) && (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8">
-                        <p className="text-gray-500">
-                          No expense records found
-                        </p>
-                        <Link href="/expenses/new">
-                          <Button variant="link" className="mt-2">
-                            Record your first expense
-                          </Button>
-                        </Link>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </CardContent>
         </Card>
